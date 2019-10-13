@@ -1,63 +1,65 @@
 class Omdb {
 
     constructor(apiKey) {
-        this.baseUrl = `http://www.omdbapi.com/?apikey=${apiKey}&&`
-    }
-
-    ajax(url, resolve, reject) {
-        let xhr = new XMLHttpRequest();
-        xhr.open('get', url);
-        xhr.onload = data => resolve(data);
-        xhr.onerror = err => reject(err);
-        xhr.send();
-    }
-
-    getDataPromise(url) {
-        return new Promise( (resolve, reject) => {
-            this.ajax(url, resolve, reject);
-        });
-    }
-
-    getDataWithAjax(url) {
-        this.getDataPromise(url)
-        .then( (data)=> {
-            console.log(data.currentTarget.response);
-        })
-        .catch( (err)=> {
-            console.log(err);
-        });
-    }
-
-    getDataWithFetch(url) {
-        fetch(url)
-            .then(response => response.json())
-            .then(json => console.log(json))
+        this.baseUrl = `http://www.omdbapi.com/?apikey=${apiKey}&&`;
+        this.allBoxOffice = 0;
+        this.cnt = 0;
     }
 
     getMovieById(id) {
         const url = this.baseUrl + `i=${id}`;
-        this.getDataWithAjax(url);
+    }
+
+    getInt(str) {
+        let ans ='';
+        for(let i of str) {
+            if(i.charCodeAt()>=48 && i.charCodeAt()<=57){
+                ans +=i;
+            }
+        }
+        ans = parseInt(ans);
+        return ans;
+    }
+    getMiddle() {
+        const allBoxOffice = this.allBoxOffice;
+        const cnt = this.cnt;
+        this.allBoxOffice = 0;
+        this.cnt = 0;
+        return allBoxOffice/cnt
     }
 
     getMovieByTitle(title) {
         const url = this.baseUrl + `t=${title}`;
-        this.getDataWithAjax(url);
+        fetch(url)
+            .then(response => response.json())
+            .then(json => {
+                if( json.BoxOffice && json.BoxOffice !== 'N/A') {
+                    console.log(json.BoxOffice);
+                    let money = this.getInt(json.BoxOffice);   
+                    console.log(money);
+                    this.allBoxOffice += money;
+                    this.cnt += 1;
+                } 
+            })
     }
 
     getMovieBySearch(item) {
         const url = this.baseUrl + `s=${item}`;
-        this.getDataWithAjax(url);
+        fetch(url)
+            .then(response => response.json())
+            .then(json => {
+                for(let movie of json.Search) {
+                    this.getMovieByTitle(movie.Title);
+                }
+            })
     }
 }
 
 
-/*********************************driver code /******************************************** */ 
+/*********************************driver code /*********************************************/ 
 const apiKey = '985c1901';
 let db = new Omdb(apiKey);
-// db.getMovieBySearch('Avengers');
-
-
-
+db.getMovieBySearch('Avengers');
 
 
 
